@@ -1,7 +1,8 @@
 import pygame
 import cards
 import random
-import check
+from datafiles import data
+from datafiles import max_ammo
 
 WIDTH = 0
 HEIGHT = 0
@@ -13,7 +14,7 @@ BLACK = (0, 0, 0)
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
-pygame.display.set_caption('хуета')
+pygame.display.set_caption('Citadels')
 clcok = pygame.time.Clock()
 WIDTH = pygame.display.Info().current_w
 HEIGHT = pygame.display.Info().current_h
@@ -36,17 +37,20 @@ char_deck = [pygame.image.load('Sprites/characters/assasin.png'),
              pygame.image.load('Sprites/characters/merchant.png'),
              pygame.image.load('Sprites/characters/architect.png'),
              pygame.image.load('Sprites/characters/warlord.png')]
-deck = []
+deck_quar = []
+pos_x = WIDTH / 2 - width / 2
+pos_y = HEIGHT / 2 - height / 2
+for i in range(len(data[0])):
+    # rand_x = random.randint(0, WIDTH - width)
+    # rand_y = random.randint(0, HEIGHT - height)
+    quart = pygame.image.load('Sprites/quarters/' + data[0][i] + '.png')
+    for j in range(data[1][i]):
+        deck_quar.append(cards.Quartal(pos_x, pos_y, width, height, quart, screen, "unique", 3))
 
-for i in range(100):
-    rand_x = random.randint(0, WIDTH - width)
-    rand_y = random.randint(0, HEIGHT - height)
-    index = random.randint(0, 7)
-    deck.append(cards.Card(rand_x, rand_y, width, height, char_deck[index], screen))
 
 deck_char = []
-deck_quar = []
-game = cards.Game(deck_char, deck_quar, deck, screen)
+# game = cards.Game(deck_char, deck_quar, screen) # то как должен выглядить конечный класс игры
+game = cards.Game(deck_char, deck_quar, screen, 2)
 
 king_prime = pygame.image.load('Sprites/characters/king.png')
 king = pygame.transform.scale(king_prime, (width, height))
@@ -60,13 +64,16 @@ while run:
             run = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            game.mouse_down(event.pos)
+            # game.mouse_down(event.pos)
+            game.players[0].mouse_down(event.pos)
 
         if event.type == pygame.MOUSEBUTTONUP:
-            game.mouse_up()
+            # game.mouse_up()
+            game.players[0].mouse_up()
 
         if event.type == pygame.MOUSEMOTION:
-            game.mouse_move(event.rel)
+            # game.mouse_move(event.rel)
+            game.players[0].mouse_move(event.rel)
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
@@ -75,7 +82,6 @@ while run:
     if keys[pygame.K_SPACE]:
         king = pygame.transform.scale(king_prime, (int(width * scale), int(height * scale)))
         scale += 1e-1
-        print("aue")
 
 
     screen.fill(BLACK)
