@@ -1,7 +1,7 @@
-from Player import Player
 from characters import*
 from Quarter import deck
 import AI, random
+from Docer import doc
 
 colors = [(34, 123, 255), (165, 50, 54), (165, 150, 54), (65, 150, 54),
           (165, 50, 154), (15, 220, 54), (165, 0, 54)] # временно будем использовать для определения где какой игрок
@@ -15,6 +15,7 @@ class Game(): # нужны приватные методы, чтобы огра�
         self.deckChar = [Assassin(None, self, 'Assassin'), Thief(None, self, 'Thief'), Wizard(None, self, 'Wizard'),
                          King(None, self, 'King'), Bishop(None, self, 'Bishop'), Merchant(None, self, 'Merchant'),
                          Architect(None, self, 'Architect'), Warlord(None, self, 'Warlord')] # все персонажи
+        self.openChars = []
         self.players = [] # игроки заполняются при вызове self.init()
         self.queue = [None] * 8 # порядок хода игроков
         self.firstConstruct = None # игрок, который первый достроил город
@@ -83,6 +84,7 @@ class Game(): # нужны приватные методы, чтобы огра�
         for i in range(len(names) - 1):
             self.players.append(Player(names[i + 1], self, hands[i + 1], pos[i + 1], AI.Ai(self, self.controller, names[i + 1])))
             # self.players.append(Player(names[i + 1], self, hands[i + 1], pos[i + 1], None))
+        doc.write("/start")
 
     def zoom_players(self, koeff):
         def set_zoom(cards):
@@ -110,15 +112,17 @@ class Game(): # нужны приватные методы, чтобы огра�
         while self.deckChar[index].choosen: index = random.randint(0, 7)
         if not hide and index == 3:
             while index == 3:
-                print('King! King!! King!!!')
                 index = random.randint(0, 7)
                 while self.deckChar[index].choosen: index = random.randint(0, 7)
         self.deckChar[index].choosen = True
         self.controller.append_drop(self.deckChar[index])
+        str = ""
         if not hide:
-            print(self.deckChar[index].name, 'dropped')
+            # print(self.deckChar[index].name, 'dropped')
+            str = self.deckChar[index].name
             self.deckChar[index].state = "open"
-        return index
+            self.openChars.append(str)
+        return str
 
     def _choosen_drop(self, name):
         # index = self.controller.index_playe1r
@@ -132,12 +136,13 @@ class Game(): # нужны приватные методы, чтобы огра�
         self.deckChar[index].player = player
 
     def _reload(self): # забирает у всех игроков карты персонажей, делает колоду персонажей полной, опусташает очередь
+        self.openChars.clear()
         self.not_choosen = 8
         self.controller.dropList.clear()
         self.preparing = True
         game_running = True
         self.set_active_player(self.players[0])
-        print("перезагружаем игру")
+        doc.write("*/reload")
         for player in self.players:
             player.dropCharList()
             player.character = self.character # отдаем каждому игроку нейтрального персонажа
@@ -156,7 +161,6 @@ class Game(): # нужны приватные методы, чтобы огра�
         for i in range(len(self.queue)): # опусташаем очередь
             self.queue[i] = None
         if game_running: self.state['choose char'] = True # если игра не закончена, то ожидаем выбор персонажа
-        self.info()
         self.update_interface()
         self.running = game_running
 
@@ -169,7 +173,7 @@ class Game(): # нужны приватные методы, чтобы огра�
             peasant = self.players[0]
             del self.players[0]
             self.players.append(peasant)
-        print('now king is:', self.players[0].name, 'peasants count:', len(self.players) - 1)
+        # print('now king is:', self.players[0].name, 'peasants count:', len(self.players) - 1)
 
     def giveCard(self, count): # даем count карт игроку который вызвал этот метод
         cards = []
@@ -212,13 +216,15 @@ class Game(): # нужны приватные методы, чтобы огра�
             if player.all_actions['maproom_bonus']: value += len(player.hand)
             record.append(value)
             player.info()
-        print("\nwinner is:", self.players[record.index(max(record))].name)
-        print("score:", max(record))
+        print(f"\nwinner is:{self.players[record.index(max(record))].name}, score:{max(record)}")
+        for i in range(len(record)):
+            if self.players[record.index(max(record))] != self.players[i]:
+                print(f"{self.players[i].name}'s score: {record[i]}")
 
     def info(self): # просто дает информацию о состоянии игры
+        doc.write("~/info")
         for player in self.players:
             player.info()
-        print(self.state)
 
     def active_player(self):
         player = self.controller.active_player
@@ -235,6 +241,11 @@ class Game(): # нужны приватные методы, чтобы огра�
         if self.active_player().ai: return
         self.controller.interface.add_text(text)
 
+    def getPlayersQueue(self):
+        str = ""
+        for player in self.players:
+            str += player.name + ", "
+        return str[:-2]
     def update_interface(self):
         self.controller.interface.set_player(self.active_player())
 
@@ -278,6 +289,7 @@ class Game(): # нужны приватные методы, чтобы огра�
             if self.not_choosen == 0:
                 self.preparing = False
                 self.state['choose char'] = False
+                doc.write("*/round;")
                 self.rounding = True
             else:
                 self.set_text('выберите персонажа, ' + self.active_player().name)
@@ -299,32 +311,45 @@ class Game(): # нужны приватные методы, чтобы огра�
             self.active_player().burn(value)
 
     def prepareChoosHand(self, hide, open):
+        d_open = ""
         for i in range(hide):
             self._random_drop(True)
         for i in range(open):
-            self._random_drop(False)
+            str = self._random_drop(False)
+            if len(str) != 0:
+                d_open += str + ", "
+        if len(d_open) == 0:
+            d_open = "None, "
         chars = []
+        str_chars = ""
         for char in self.deckChar:
-            if not char.choosen: chars.append([char.primImg["open"], char.name])
+            if not char.choosen:
+                chars.append([char.primImg["open"], char.name])
+                str_chars += char.name + ", "
         self.controller.create_buttons(chars, False)
         self.set_text('выберите персонажа, ' + self.active_player().name)
         self.controller.shuffle()
         if self.active_player().ai: # если раунд начинает ИИ
             self.active_player().ai.setSolution("chooseChar")
+        doc.write(f"/dropped: open({d_open[:-2]}), hide({hide}) ~/active: {str_chars[:-2]};")
 
     def prepare_round(self):
+        self.info()
+        doc.write("*/prepare;")
+        doc.write(f"/queue: {self.getPlayersQueue()};")
         if len(self.players) == 2 or len(self.players) == 3: self.prepareChoosHand(1, 0)
         elif len(self.players) == 4: self.prepareChoosHand(1, 2)
         elif len(self.players) == 5: self.prepareChoosHand(1, 1)
         elif len(self.players) == 6: self.prepareChoosHand(1, 0)
         elif len(self.players) == 7: self.prepareChoosHand(1, 0)
 
-    def round(self): # перед тем как продолжить, нужно сделать так, чтобы постреонные кварталы, золото и закрытые персонажи рисовались
+    def round(self):
         for i in range(len(self.queue)):
             if self.queue[i]:
                 self.controller.active_player = self.queue[i]
                 self.active_player().action(i + 1)
-                self.queue[i] = None # это вызовит ошибки в дальнейшем, очередь используется в методах персонажей
+                doc.write(f"/turn: {self.active_player().name}({self.active_player().character.name});")
+                self.queue[i] = None # это вызовит ошибки в дальнейшем, очередь используется в методах персонажей(я уже не уверен)
                 return
         print("round is over")
         self.rounding = False

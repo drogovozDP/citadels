@@ -1,6 +1,7 @@
 import pygame, random
 from Button import Card, h_koeff
 from Player import Player, translate
+from Docer import doc
 
 class character(Card): # шаблон от которого будем наследоваться
     def __init__(self, player, gameMaster, name):
@@ -36,12 +37,14 @@ class character(Card): # шаблон от которого будем насл�
         self.gameMaster.state['character ability'] = False  # теперь ВСЕ состояния должны быть фолс(это важно)
         self.gameMaster.update_interface()
         self.player.activate_action()  # возвращаем оставшийся пулл действий
+        self.gameMaster.controller.interface.hand_zone.set_hand()
 
 class Assassin(character):
     def __init__(self, player, gameMaster, name):
         character.__init__(self, player, gameMaster, name)
         self.choosen = False
         self.initiative = 1 # порядок вызова персонажа
+
     def ability(self, victim):
         if victim:
             victim.alive = False
@@ -54,13 +57,13 @@ class Assassin(character):
             print(self.player.name, 'wants to kill...')
             self.gameMaster.set_text('Кто сегодня не пойдет на работу?')
             self.gameMaster.controller.create_buttons(buttons, False)
-            self.gameMaster.controller.interface.hand_zone.set_hand()
 
 class Thief(character):
     def __init__(self, player, gameMaster, name):
         character.__init__(self, player, gameMaster, name)
         self.choosen = False
         self.initiative = 2
+
     def ability(self, victim):
         if victim:
             victim.robed = True

@@ -1,6 +1,7 @@
 import random
 import pygame
 from Button import Card, h_koeff
+from Docer import doc
 
 class Quarter(Card):
     def __init__(self, name, value, color):

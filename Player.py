@@ -1,5 +1,6 @@
 import pygame
 from Button import text_koeff
+from Docer import doc
 
 translate = {'done': 'завершить ход', 'build': 'построить', 'ability': 'способность', 'laboratory_action': 'лаборатория',
               'graveyard_action': 'кладбище', 'greatwall_bonus': 'великая стена',
@@ -77,6 +78,7 @@ class Player():
         self.charList[-1].x = self.x + char.width * (len(self.charList) - 1)
         self.charList[-1].y = self.y - char.height
         self.gameMaster.queue[char.initiative - 1] = self
+        doc.write(f"->pick: {char_name};")
 
     def choose_drop(self, char_name):
         for char in self.gameMaster.deckChar:
@@ -88,7 +90,7 @@ class Player():
     def _end_action(self):
         self.selected = False
         self.gameMaster.controller.del_but('all')
-        print('done')
+        print('/done')
 
     def recive_command(self, command):
         self.action_pool.pop(self.action_pool.index(command)) # убираем это действие из множетсва действий
@@ -125,31 +127,40 @@ class Player():
             self.gameMaster.takeCard([button.value])
         self.gameMaster.update_interface()
         self.activate_action()
-        print(len(self.gameMaster.deckQuar))
+        doc.write(f"hand({len(self.hand)-1}+1={len(self.hand)}) ~/got: {quarter.name};")
+
+    def _getRow(self, mas):
+        str = ""
+        for m in mas:
+            str += m.name + ', '
+        return str[:-2]
 
     def take_resources(self, kind):
         self.gameMaster.state['resources'] = False
         if kind == 'gold':
-            # print(1/0)
+            doc.write(f"->resources: gold({self.gold}+{self.take['gold']}={self.gold+self.take['gold']});")
             self.gold += self.take["gold"]
-            print(self.name + ' has gold: ' + str(self.gold) + ", he recived " + str(self.take["gold"]) + " gold")
+            # print(self.name + ' has gold: ' + str(self.gold) + ", he recived " + str(self.take["gold"]) + " gold")
             self.setTextRenderer() # обновим золото на столе у игрока
             self.activate_action()
         elif kind == 'quarter':
-            print(self.name + ': take quarters')
             cards = self.gameMaster.giveCard(self.take['quarter'])
+            doc.write(f"->resources: quarter({self.take['quarter']}) ~/{self._getRow(cards)}")
             self.gameMaster.controller.del_but('all')
             if len(cards) == 0:
                 self.activate_action()
                 return
             if self.all_actions['library_bonus']:
+                str = ""
                 for quar in cards:
+                    str += quar.name + ", "
                     self.hand.append(quar)
                 self.gameMaster.update_interface()
                 self.activate_action()
+                doc.write(f"hand({len(self.hand)-self.take['quarter']}+{self.take['quarter']}="
+                          f"{len(self.hand)}) ~/got: {str[:-2]};")
                 return
             buttons = []
-            print(len(self.gameMaster.deckQuar), len(cards))
             for card in cards:
                 buttons.append([card.primImg["open"], card])
             self.gameMaster.controller.create_buttons(buttons, False)
@@ -168,7 +179,8 @@ class Player():
         self.setTextRenderer()
         self.city.append(card)
         self.city[-1].built(self)
-        print(self.name + " have built " + card.name + "(value: " + str(card.value) +")" + ", now he(she) has " + str(self.gold) + " gold")
+        doc.write(f"->build: {card.name};")
+        # print(self.name + " have built " + card.name + "(value: " + str(card.value) +")" + ", now he(she) has " + str(self.gold) + " gold")
         for i in range(len(self.hand)):
             if self.hand[i] == card:
                 self.hand.pop(i)
@@ -185,17 +197,18 @@ class Player():
         buttons = []
         for card in self.hand:
             if self.gold >= card.value:
-                not_exict = False
+                not_exist = False
                 for quar in self.city:
                     if card.name == quar.name:
-                        not_exict = True
-                if not not_exict:
+                        not_exist = True
+                if not not_exist:
                     buttons.append([card.primImg["open"], card])
         if len(buttons) == 0:
+            self.action_pool.append('build')
             self.activate_action()
             return
         buttons.append(['Отмена', 'cancel'])
-        print('you have', self.gold, 'gold')
+        # print('you have', self.gold, 'gold')
         self.gameMaster.set_text(self.name + ', у вас есть ' + str(self.gold) + ' золота')
         self.gameMaster.state['build'] = True
         self.gameMaster.controller.del_but('all')
@@ -220,6 +233,7 @@ class Player():
                         player.setTextRenderer()
                         self.gold = 0
                         self.setTextRenderer()
+                        self.gameMaster.controller.interface.gold_zone.set_gold()
             print('oh my god, you have lost whole your gold!')
         self.character.default() # применяется свойства персонажа по умолчанию
         # print(self.name + " СЕЙЧАС ДОЛЖЕН ВЗЯТЬ ЗОЛОТО")
@@ -349,13 +363,16 @@ class Player():
         else: return True
 
     def info(self):
-        quarters = ''
-        built = ''
+        quarters = ""
+        built = ""
         for card in self.hand:
-            quarters += card.name + ', '
+            quarters += f"{card.name}, "
         for card in self.city:
-            built += card.name + ', '
-        print(self.name +
+            # built += f"{card.name}{card.value, card.color}, "
+            built += f"{card.name}, "
+        if built == "": built = "None, "
+        if quarters == "": quarters = "None, "
+        doc.write(self.name +
               ': gold = ' + str(self.gold) +
-              ', quarters = ' + quarters +
-              ', city = ' + built)
+              '; quarters = ' + quarters[:-2] +
+              '; city = ' + built[:-2] + ";")

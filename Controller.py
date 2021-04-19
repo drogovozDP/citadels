@@ -3,6 +3,7 @@ from Game import Game
 from Interface import Interface
 from random import shuffle
 from Button import ZoomCard, w_koeff, h_koeff
+from Docer import doc
 
 class Check:
     def __init__(self, names):
@@ -167,10 +168,6 @@ class Controller:
         x, y = rel[0], rel[1]
         self.x += x
         self.y += y
-            # char.y += self.y
-        # for player in self.gameMaster.players:
-        #     player.x += x
-        #     player.y += y
 
     def set_gold(self):
         self.interface.set_gold(self.gameMaster.active_player())
@@ -191,7 +188,8 @@ class Controller:
                     index = 0
         self.active_player = self.gameMaster.players[index]
         self.shuffle()
-        if self.active_player.ai and self.active_player != self.gameMaster.players[0]: #self.active_player != self.gameMaster.players[0]: # если следующий игрок ИИ
+        # if self.active_player.ai and self.active_player != self.gameMaster.players[0]: #self.active_player != self.gameMaster.players[0]: # если следующий игрок ИИ
+        if len(self.buttons) > 0 and self.active_player.ai:
             self.active_player.ai.setSolution("chooseChar")
         self.set_interface()
         self.interface.set_text("")
@@ -264,8 +262,8 @@ class Controller:
             self._norm(text, place, place.width * 0.05)
 
     def getButton(self, value):
-        if value == "first":
-            return self.buttons[0]
+        if value.isdigit():
+            return self.buttons[int(value)]
         if value == "random":
             return random.choice(self.buttons)
         for btn in self.buttons:

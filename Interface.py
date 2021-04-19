@@ -1,4 +1,5 @@
 from Button import*
+from Docer import doc
 
 class Zone:
     def __init__(self, x, y, width, height, interface):
@@ -84,6 +85,7 @@ class HandZone(Zone):
 
     def set_hand(self):
         self.hand.clear()
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
         for quar in self.interface.player.hand:
             self.hand.append(Card(self.interface.screen, quar.primImg["open"]))
         for char in self.interface.player.charList:

@@ -6,10 +6,10 @@ import pygame
 # names = ['Димочка', 'Ромс', 'Гандон', 'Сука', 'Пидор', 'Тварь']
 # names = ['Димочка', 'Ромс', 'Гандон', 'Сука', 'Пидор']
 # names = ['Димочка', 'Ромс', 'Гандон', 'Сука']
-names = ['Миша', 'Леша', 'Яков', 'Саша']
+# names = ['Миша', 'Леша', 'Яков', 'Саша']
 # names = ['Димончик', 'Сука', 'Яков', 'Саша']
 # names = ['Димочка', 'Ромс', 'Гандон']
-# names = ['Димочка', 'Ромс']
+names = ['Димочка', 'Ромс']
 
 WIDTH, HEIGHT, FPS = 0, 0, 60
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
@@ -20,6 +20,19 @@ pygame.init()
 clock = pygame.time.Clock()
 
 controller = Controller(names, screen)
+
+# import json
+# a = {"a": 1, "list": {}}
+# output = open("file.txt", "w")
+# output.write(json.dumps(a))
+# output.close()
+# input = open("file.txt", "r")
+# b = json.loads(input.readline())
+# print(b["list"])
+# input.close()
+# print(b)
+# print(a)
+
 run = True
 zooming = False
 while run:
